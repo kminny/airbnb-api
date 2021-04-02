@@ -6,7 +6,17 @@ from rest_framework.views import APIView
 from rooms.models import Room
 from rooms.serializers import RoomSerializer
 from .models import User
-from .serializers import ReadUserSerializer, WriteUserSerializer
+from .serializers import UserSerializer
+
+
+class UsersView(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            new_user = serializer.save()
+            return Response(UserSerializer(new_user).data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MeView(APIView):
@@ -15,25 +25,16 @@ class MeView(APIView):
 
     def get(self, request):
         return Response(
-            data=ReadUserSerializer(request.user).data, status=status.HTTP_200_OK
+            data=UserSerializer(request.user).data, status=status.HTTP_200_OK
         )
 
     def put(self, request):
-        serializer = WriteUserSerializer(request.user, data=request.data, partial=True)
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response()
         else:
             return Response(serializer.errors, stauts=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(["GET"])
-def user_detail(request, pk):
-    try:
-        user = User.objects.get(pk=pk)
-        return Response(ReadUserSerializer(user).data, status=status.HTTP_200_OK)
-    except User.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class FavsView(APIView):
@@ -59,3 +60,12 @@ class FavsView(APIView):
             except Room.DoesNotExist:
                 pass
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+def user_detail(request, pk):
+    try:
+        user = User.objects.get(pk=pk)
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
