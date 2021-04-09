@@ -50,7 +50,9 @@ class UsersViewset(ModelViewSet):
     @action(detail=True)
     def favs(self, request, pk):
         user = self.get_object()
-        serializer = RoomSerializer(user.favs.all(), many=True)
+        serializer = RoomSerializer(
+            user.favs.all(), many=True, context={"request": request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @favs.mapping.put
